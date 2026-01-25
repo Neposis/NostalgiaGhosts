@@ -5,7 +5,6 @@ import time
 from nbtlib import nbt
 
 PLAYERDATA_DIR = "./playerdata"
-# cache filename template — per-world cache will be created using the current world folder name
 CACHE_FILE_TEMPLATE = "uuid_cache_{world}.json"
 TAG = "nostalgia_ghost"
 Y_OFFSET = 0.0
@@ -112,12 +111,12 @@ def names_to_uuids(names, cache=None):
         try:
             r = requests.post(url, json=batch, timeout=10)
         except Exception:
-            # network error - skip this batch
+            # network error
             time.sleep(0.5)
             continue
 
         if r.status_code != 200:
-            # failed - be polite and wait a bit
+            # failed
             time.sleep(0.5)
             continue
 
@@ -185,7 +184,6 @@ def format_item_for_command(snbt_str):
 
     # rest of the string after the id
     rest = inner[q2 + 1:]
-    # split top-level by commas (ignore commas inside braces)
     parts = []
     cur = []
     depth = 0
@@ -321,9 +319,27 @@ def main():
                 continue
 
             x, y, z = map(float, data["Pos"])
-            yaw = float(data.get("Rotation", [0])[0])
+            # Data gets are async
+            rot = data.get("Rotation")
+            if isinstance(rot, (list, tuple)) and len(rot) > 0 and rot[0] is not None:
+                try:
+                    yaw = float(rot[0])
+                except (TypeError, ValueError):
+                    yaw = 0.0
+            else:
+                yaw = 0.0
             inv = data["Inventory"]
-            selected = int(data.get("SelectedItemSlot", 0))
+            
+            sel_val = data.get("SelectedItemSlot", 0)
+            if sel_val is None:
+                selected = 0
+            else:
+                try:
+                    selected = int(sel_val)
+                except (TypeError, ValueError):
+                    selected = 0
+                    
+            # end of async stuff
 
             name, textures = uuid_profile(uuid, cache)
             held = get_held(inv, selected)
@@ -342,7 +358,7 @@ def main():
                 sn = armor[slot_idx]
                 if s == "head":
                     # always equip a player head on the head slot
-                    # use player name for SkullOwner (no textures/UUIDs)
+                    # use player name for SkullOwner
                     owner = name if name else uuid
                     head = ('{id:player_head,Count:1b,tag:{'
                             f'SkullOwner:{owner}'
