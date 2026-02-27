@@ -9,7 +9,7 @@ CACHE_FILE_TEMPLATE = "uuid_cache_{world}.json"
 TAG = "nostalgia_ghost"
 Y_OFFSET = 0.0
 
-OUT_DIR = "./nostalgia_ghosts"
+OUT_DIR = "./datapacks/nostalgia_ghosts"
 FUNC_DIR = f"{OUT_DIR}/data/ghosts/functions"
 TAG_DIR = f"{OUT_DIR}/data/minecraft/tags/functions"
 
